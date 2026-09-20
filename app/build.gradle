@@ -1,0 +1,13 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'com.fastkeyboard'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'com.fastkeyboard'
+        minSdk 26
+        targetSdk 35
+        versionCode 13
+        versionName '13.0'
+    }
+}
