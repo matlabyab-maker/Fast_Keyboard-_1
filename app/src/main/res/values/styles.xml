@@ -1,9 +1,17 @@
 <resources>
-    <style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar">
+    <style name="FastRadioButton" parent="@android:style/Widget.Material.Button">
+        <item name="android:backgroundTint">#FF69B4</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:fontFamily">sans</item>
-        <item name="android:colorAccent">#1457C7</item>
-        <item name="android:navigationBarColor">#FFFDF5</item>
-        <item name="android:statusBarColor">#FFFDF5</item>
         <item name="android:windowLightStatusBar">true</item>
+        <item name="android:colorAccent">#FF1493</item>
+        <item name="android:buttonStyle">@style/FastRadioButton</item>
+        <item name="android:navigationBarColor">#FFFFFF</item>
+        <item name="android:statusBarColor">#FFFFFF</item>
+        <item name="android:windowBackground">#FFFFFF</item>
     </style>
 </resources>

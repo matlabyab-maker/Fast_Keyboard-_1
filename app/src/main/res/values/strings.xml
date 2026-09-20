@@ -1,7 +1,1 @@
-<resources>
-    <string name="app_name">Fast Keyboard</string>
-    <string name="english">English</string>
-    <string name="persian">فارسی</string>
-    <string name="widget_keyboard">Fast Keyboard</string>
-    <string name="widget_steering">فرمان ماشین</string>
-</resources>
+<resources><string name="app_name">Fast Radio</string></resources>
