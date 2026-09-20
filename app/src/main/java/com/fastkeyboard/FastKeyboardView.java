@@ -8,6 +8,7 @@ import android.graphics.drawable.*;
 import android.view.*;
 import android.view.inputmethod.InputConnection;
 import android.widget.*;
+import android.app.AlertDialog;
 import java.util.*;
 
 public class FastKeyboardView extends View {
