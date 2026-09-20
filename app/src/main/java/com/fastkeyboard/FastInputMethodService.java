@@ -4,14 +4,19 @@ import android.inputmethodservice.InputMethodService;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.ViewGroup;
 
 public class FastInputMethodService extends InputMethodService {
+    private View keyboardView;
+
     // Keep the IME in the normal keyboard window instead of fullscreen/extract mode.
-    @Override public boolean onEvaluateFullscreenMode() {
+    @Override
+    public boolean onEvaluateFullscreenMode() {
         return false;
     }
 
-    @Override public void onCreate() {
+    @Override
+    public void onCreate() {
         super.onCreate();
         Window w = getWindow().getWindow();
         if (w != null) {
@@ -19,29 +24,35 @@ public class FastInputMethodService extends InputMethodService {
         }
     }
 
-    @Override public View onCreateInputView() {
-        FastKeyboardView view = new FastKeyboardView(this, getCurrentInputConnection());
-        // Use a normal keyboard height: about 34% of the usable display height.
-        // This prevents the custom view from expanding over the whole screen.
+    private int getKeyboardHeight() {
         int screenHeight = getResources().getDisplayMetrics().heightPixels;
-        int keyboardHeight = Math.round(screenHeight * 0.34f);
-        view.setLayoutParams(new android.view.ViewGroup.LayoutParams(
-                android.view.ViewGroup.LayoutParams.MATCH_PARENT, keyboardHeight));
+        return Math.round(screenHeight * 0.34f);
+    }
+
+    @Override
+    public View onCreateInputView() {
+        FastKeyboardView view = new FastKeyboardView(this, getCurrentInputConnection());
+        keyboardView = view;
+        view.setLayoutParams(new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, getKeyboardHeight()));
         return view;
     }
 
-    @Override public void onStartInputView(android.view.inputmethod.EditorInfo info, boolean restarting) {
+    @Override
+    public void onStartInputView(android.view.inputmethod.EditorInfo info, boolean restarting) {
         super.onStartInputView(info, restarting);
-        View view = getInputView();
-        if (view != null) {
-            int screenHeight = getResources().getDisplayMetrics().heightPixels;
-            int keyboardHeight = Math.round(screenHeight * 0.34f);
-            android.view.ViewGroup.LayoutParams lp = view.getLayoutParams();
-            if (lp != null) {
-                lp.height = keyboardHeight;
-                lp.width = android.view.ViewGroup.LayoutParams.MATCH_PARENT;
-                view.setLayoutParams(lp);
+        // InputMethodService does not provide getInputView(). Keep the reference
+        // returned by onCreateInputView() instead.
+        if (keyboardView != null) {
+            ViewGroup.LayoutParams lp = keyboardView.getLayoutParams();
+            if (lp == null) {
+                lp = new ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, getKeyboardHeight());
+            } else {
+                lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
+                lp.height = getKeyboardHeight();
             }
+            keyboardView.setLayoutParams(lp);
         }
     }
 }
