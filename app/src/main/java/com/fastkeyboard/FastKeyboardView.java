@@ -31,6 +31,10 @@ public class FastKeyboardView extends android.view.View {
     private boolean hideTop = false;
     private float transparency = 1f;
 
+    // Soft, uniform touch highlight for the complete pressed key surface.
+    private boolean pressed = false;
+    private float pressedL, pressedT, pressedR, pressedB;
+
     public FastKeyboardView(Context context, InputConnection connection) {
         super(context);
         ic = connection;
@@ -65,8 +69,16 @@ public class FastKeyboardView extends android.view.View {
         p.setStyle(Paint.Style.FILL);
         p.setColor(CREAM);
         p.setShadowLayer(2.2f, 0f, 1f, 0x33000000);
-        c.drawRoundRect(new RectF(l, t, r, b), 8f, 8f, p);
+        RectF rect = new RectF(l, t, r, b);
+        c.drawRoundRect(rect, 8f, 8f, p);
         p.clearShadowLayer();
+
+        // A faint, even light covers the whole key while it is being touched.
+        if (pressed && sameRect(l, t, r, b)) {
+            p.setStyle(Paint.Style.FILL);
+            p.setColor(0x35FFD54F);
+            c.drawRoundRect(rect, 8f, 8f, p);
+        }
         text(c, text, (l + r) / 2f, (t + b) / 2f, size);
     }
 
@@ -131,8 +143,17 @@ public class FastKeyboardView extends android.view.View {
     }
 
     @Override public boolean onTouchEvent(MotionEvent e) {
-        if (e.getAction() != MotionEvent.ACTION_UP) return true;
         float x = e.getX(), y = e.getY(), w = getWidth(), h = getHeight();
+
+        if (e.getAction() == MotionEvent.ACTION_DOWN || e.getAction() == MotionEvent.ACTION_MOVE) {
+            updatePressedKey(x, y, w, h);
+            return true;
+        }
+        if (e.getAction() != MotionEvent.ACTION_UP) return true;
+
+        boolean wasPressed = pressed && pointInPressedKey(x, y);
+        clearPressedKey();
+        if (!wasPressed) return true;
         float toolbarH = hideTop ? 0f : h * 0.155f;
         float numberH = hideTop ? 0f : h * 0.135f;
 
@@ -187,6 +208,67 @@ public class FastKeyboardView extends android.view.View {
             handleBottom(x, w);
         }
         return true;
+    }
+
+    private boolean sameRect(float l, float t, float r, float b) {
+        return Math.abs(l - pressedL) < 0.5f && Math.abs(t - pressedT) < 0.5f
+                && Math.abs(r - pressedR) < 0.5f && Math.abs(b - pressedB) < 0.5f;
+    }
+
+    private boolean pointInPressedKey(float x, float y) {
+        return pressed && x >= pressedL && x < pressedR && y >= pressedT && y < pressedB;
+    }
+
+    private void clearPressedKey() {
+        pressed = false;
+        invalidate();
+    }
+
+    private void updatePressedKey(float x, float y, float w, float h) {
+        float toolbarH = hideTop ? 0f : h * 0.155f;
+        float numberH = hideTop ? 0f : h * 0.135f;
+        float l = 0f, t = 0f, r = 0f, b = 0f;
+        boolean found = false;
+
+        if (!hideTop && y < toolbarH) {
+            float cw = w / 10f;
+            int i = Math.min(9, Math.max(0, (int) (x / cw)));
+            l = i * cw; r = (i + 1) * cw; t = 0f; b = toolbarH; found = true;
+        } else if (!hideTop && y < toolbarH + numberH) {
+            float cw = w / 14f;
+            int i = Math.min(13, Math.max(0, (int) (x / cw)));
+            l = i * cw; r = (i + 1) * cw; t = toolbarH; b = toolbarH + numberH; found = true;
+        } else if (y >= toolbarH + numberH) {
+            float rowH = (h - toolbarH - numberH) / 4f;
+            int row = (int) ((y - toolbarH - numberH) / rowH);
+            if (row >= 0 && row <= 2) {
+                float cw = w / 12f;
+                int i = Math.min(11, Math.max(0, (int) (x / cw)));
+                l = i * cw; r = (i + 1) * cw;
+                t = toolbarH + numberH + row * rowH;
+                b = t + rowH; found = true;
+            } else if (row == 3) {
+                float[] widths = {0.095f, 0.095f, 0.095f, 0.405f, 0.0775f, 0.0775f, 0.0775f, 0.0775f};
+                float cur = 0f;
+                for (float part : widths) {
+                    float nx = cur + part * w;
+                    if (x >= cur && x < nx) {
+                        l = cur; r = nx;
+                        t = toolbarH + numberH + 3 * rowH; b = h; found = true; break;
+                    }
+                    cur = nx;
+                }
+            }
+        }
+
+        if (found) {
+            if (!pressed || !sameRect(l, t, r, b)) {
+                pressed = true; pressedL = l; pressedT = t; pressedR = r; pressedB = b;
+                invalidate();
+            }
+        } else if (pressed) {
+            clearPressedKey();
+        }
     }
 
     private void handleBottom(float x, float w) {
